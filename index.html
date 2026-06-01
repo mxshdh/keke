@@ -34,7 +34,7 @@
             for (const code of FUND_CODES) {
                 const data = VALUATION_DATA[code] || {};
                 let price;
-                if (prices[code]) {
+                if (prices[code] && prices[code] > 0.001 && prices[code] < 10000) {
                     price = prices[code].toFixed(3);
                 } else if (data.price && data.price > 0) {
                     price = data.price.toFixed(3);
@@ -55,16 +55,22 @@
         function refreshPrices() {
             const codes = FUND_CODES.map(c => (c.startsWith('5')||c.startsWith('6')||c.startsWith('9')?'sh':'sz') + c).join(',');
             const script = document.createElement('script');
-            script.src = `https://qt.gtimg.cn/q=${codes}`;
+            script.src = `https://web.sqt.gtimg.cn/q=${codes}`;
             script.onload = function() {
                 const prices = {};
                 for (const code of FUND_CODES) {
                     const prefix = (code.startsWith('5')||code.startsWith('6')||code.startsWith('9')?'sh':'sz');
-                    const raw = window[`v_${prefix}${code}`];
+                    const varName = `v_${prefix}${code}`;
+                    const raw = window[varName];
                     if (raw && typeof raw === 'string') {
                         const parts = raw.split('~');
-                        const price = parseFloat(parts[2]);
-                        if (!isNaN(price) && price > 0) prices[code] = price;
+                        let price = parseFloat(parts[3]); // 当前价
+                        if (isNaN(price) || price <= 0) {
+                            price = parseFloat(parts[12]); // 昨收兜底
+                        }
+                        if (!isNaN(price) && price > 0.001 && price < 10000) {
+                            prices[code] = price;
+                        }
                     }
                 }
                 renderPrices(prices);
