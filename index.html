@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>估值看板</title>
+    <style>
+        body { font-family: sans-serif; margin: 10px; background: #f5f7fb; }
+        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .header { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .fund-name { font-size: 1.1rem; font-weight: bold; }
+        .fund-code { font-size: 0.8rem; color: #666; }
+        .price { font-size: 1.2rem; font-weight: bold; color: #1e293b; }
+        .est { font-size: 1rem; color: #64748b; }
+        .rate { font-size: 1rem; font-weight: bold; }
+        .rate.positive { color: #ef4444; }
+        .rate.negative { color: #10b981; }
+        button { background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-bottom: 15px; }
+        button:active { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <h1>📊 估值看板</h1>
+    <button onclick="refreshPrices()">🔄 刷新实时股价</button>
+    <div id="fund-list"></div>
+    <div id="update-time" style="font-size:0.8rem; color:#999; text-align:center; margin-top:15px;"></div>
+    <script>
+        const VALUATION_DATA = {"161130": {"name": "纳斯达克", "est_nav": 4.58742223616409, "nav": 4.5806}, "161127": {"name": "标普生物", "est_nav": 1.7833564122381043, "nav": 1.8377}, "161128": {"name": "标普信息", "est_nav": 6.874437763802512, "nav": 6.8753}, "161126": {"name": "标普医疗", "est_nav": 1.8288706112854964, "nav": 1.8291}, "161125": {"name": "标普500", "est_nav": 3.1291295111303543, "nav": 3.1322}, "161124": {"name": "香港小盘", "est_nav": 1.0241715418182353, "nav": 1.0243}, "162411": {"name": "华宝油气", "est_nav": 0.8998361068982487, "nav": 0.8674}, "162415": {"name": "美国消费", "est_nav": 2.918637261807381, "nav": 2.979}, "162719": {"name": "石油LOF", "est_nav": 2.7162880206098925, "nav": 2.628}, "160416": {"name": "石油基金", "est_nav": 2.096943754757628, "nav": 2.0516}, "164824": {"name": "印度基金", "est_nav": 1.283488656707588, "nav": 1.2957}, "501225": {"name": "全球芯片", "est_nav": 3.2453915873034433, "nav": 3.2359}, "160140": {"name": "美国精选", "est_nav": 1.3889102051382045, "nav": 1.4003}, "160644": {"name": "港美互联", "est_nav": 2.1283142791108047, "nav": 2.0603}, "160719": {"name": "嘉实黄金", "est_nav": 2.0246269326297694, "nav": 2.046}, "160723": {"name": "嘉实原油", "est_nav": 2.064643940456479, "nav": 2.0238}, "161116": {"name": "黄金主题", "est_nav": 1.667212742590582, "nav": 1.6934}, "161129": {"name": "原油易达", "est_nav": 1.7399664608651575, "nav": 1.6905}, "163208": {"name": "全球油气", "est_nav": 1.3217794983587634, "nav": 1.278}, "164701": {"name": "黄金LOF", "est_nav": 1.7523206665705096, "nav": 1.789}, "165513": {"name": "中信保诚", "est_nav": 1.0597298605502685, "nav": 1.0785}, "501018": {"name": "南方原油", "est_nav": 1.819514474685763, "nav": 1.7711}, "501312": {"name": "海外科技", "est_nav": 2.387360213775304, "nav": 2.3991}, "164906": {"name": "中概互联", "est_nav": 0.9725350246226001, "nav": 0.9587}};
+        const FUND_CODES = Object.keys(VALUATION_DATA);
+        function renderPrices(prices) {
+            const list = document.getElementById('fund-list');
+            list.innerHTML = '';
+            for (const code of FUND_CODES) {
+                const data = VALUATION_DATA[code] || {};
+                const price = prices[code] ? prices[code].toFixed(3) : '—';
+                const est = data.est_nav ? data.est_nav.toFixed(3) : '—';
+                const rate = (price && est && est > 0) ? ((price / est - 1) * 100) : null;
+                const rateStr = rate !== null ? (rate >= 0 ? '+' : '') + rate.toFixed(2) + '%' : '—';
+                const rateClass = rate >= 0 ? 'positive' : 'negative';
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `<div class="header"><span class="fund-name">${data.name || code}</span><span class="fund-code">${code}</span></div><div style="display:flex; justify-content: space-between; align-items: center;"><div><div class="price">${price}</div><div class="est">估值 ${est}</div></div><div class="rate ${rateClass}">${rateStr}</div></div>`;
+                list.appendChild(card);
+            }
+            document.getElementById('update-time').innerText = '股价刷新于：' + new Date().toLocaleTimeString();
+        }
+        function refreshPrices() {
+            const codes = FUND_CODES.map(c => (c.startsWith('5')||c.startsWith('6')||c.startsWith('9')?'sh':'sz') + c).join(',');
+            const script = document.createElement('script');
+            script.src = `https://qt.gtimg.cn/q=${codes}`;
+            script.onload = function() {
+                const prices = {};
+                for (const code of FUND_CODES) {
+                    const prefix = (code.startsWith('5')||code.startsWith('6')||code.startsWith('9')?'sh':'sz');
+                    const raw = window[`v_${prefix}${code}`];
+                    if (raw && typeof raw === 'string') {
+                        const parts = raw.split('~');
+                        const price = parseFloat(parts[2]);
+                        if (!isNaN(price) && price > 0) prices[code] = price;
+                    }
+                }
+                renderPrices(prices);
+                document.head.removeChild(script);
+            };
+            script.onerror = function() { alert('刷新失败，请稍后重试。'); };
+            document.head.appendChild(script);
+            renderPrices({});
+        }
+        renderPrices({});
+    </script>
+</body>
+</html>
