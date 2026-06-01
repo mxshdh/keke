@@ -33,7 +33,14 @@
             list.innerHTML = '';
             for (const code of FUND_CODES) {
                 const data = VALUATION_DATA[code] || {};
-                const price = prices[code] ? prices[code].toFixed(3) : (data.price ? data.price.toFixed(3) : '—');
+                let price;
+                if (prices[code]) {
+                    price = prices[code].toFixed(3);
+                } else if (data.price && data.price > 0) {
+                    price = data.price.toFixed(3);
+                } else {
+                    price = '—';
+                }
                 const est = data.est_nav ? data.est_nav.toFixed(3) : '—';
                 const rate = (price && est && est > 0 && price !== '—') ? ((price / est - 1) * 100) : null;
                 const rateStr = rate !== null ? (rate >= 0 ? '+' : '') + rate.toFixed(2) + '%' : '—';
