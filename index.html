@@ -80,7 +80,7 @@
 </div>
 
 <script>
-    const VALUATION_DATA = {"161130": {"name": "纳斯达克", "est_nav": 4.605217901690351, "nav": 4.6296, "price": 4.857}, "161127": {"name": "标普生物", "est_nav": 1.7330509876154694, "nav": 1.7207, "price": 1.725}, "161128": {"name": "标普信息", "est_nav": 7.092203556029742, "nav": 7.0925, "price": 7.501}, "161126": {"name": "标普医疗", "est_nav": 1.8003247489990761, "nav": 1.8004, "price": 1.83}, "161125": {"name": "标普500", "est_nav": 3.1235585985581418, "nav": 3.1443, "price": 3.199}, "161124": {"name": "香港小盘", "est_nav": 1.0263, "nav": 1.0263, "price": 1.019}, "162411": {"name": "华宝油气", "est_nav": 0.9117760083565489, "nav": 0.8924, "price": 0.889}, "162415": {"name": "美国消费", "est_nav": 2.8734838849505038, "nav": 2.902, "price": 2.891}, "162719": {"name": "石油LOF", "est_nav": 2.7621990571402173, "nav": 2.7035, "price": 2.703}, "160416": {"name": "石油基金", "est_nav": 2.1351743125684366, "nav": 2.1029, "price": 2.094}, "164824": {"name": "印度基金", "est_nav": 1.2715469590240838, "nav": 1.2825, "price": 1.255}, "501225": {"name": "全球芯片", "est_nav": 3.3686708043335463, "nav": 3.3418, "price": 4.545}, "160140": {"name": "美国精选", "est_nav": 1.389751370496405, "nav": 1.38, "price": 1.38}, "160644": {"name": "港美互联", "est_nav": 2.095457440510927, "nav": 2.0982, "price": 2.307}, "160719": {"name": "嘉实黄金", "est_nav": 2.0045750630595767, "nav": 2.017, "price": 1.988}, "160723": {"name": "嘉实原油", "est_nav": 2.1227655260656113, "nav": 2.1091, "price": 2.253}, "161116": {"name": "黄金主题", "est_nav": 1.6568756666314743, "nav": 1.6721, "price": 1.656}, "161129": {"name": "原油易达", "est_nav": 1.770016604017527, "nav": 1.7566, "price": 1.862}, "163208": {"name": "全球油气", "est_nav": 1.3421234318086497, "nav": 1.315, "price": 1.314}, "164701": {"name": "黄金LOF", "est_nav": 1.7447181664571605, "nav": 1.766, "price": 1.744}, "165513": {"name": "中信保诚", "est_nav": 1.0542142412576707, "nav": 1.065, "price": 1.053}, "501018": {"name": "南方原油", "est_nav": 1.8570597530095243, "nav": 1.8427, "price": 2.023}, "501312": {"name": "海外科技", "est_nav": 2.385899143484925, "nav": 2.4188, "price": 2.399}, "164906": {"name": "中概互联", "est_nav": 0.9939209469977279, "nav": 1.019, "price": 0.988}};
+    const VALUATION_DATA = {"161130": {"name": "纳斯达克", "est_nav": 4.616652510583659, "nav": 4.6296, "price": 4.857}, "161127": {"name": "标普生物", "est_nav": 1.7471084881052397, "nav": 1.7207, "price": 1.725}, "161128": {"name": "标普信息", "est_nav": 6.989792361978091, "nav": 7.0925, "price": 7.501}, "161126": {"name": "标普医疗", "est_nav": 1.8162305831647676, "nav": 1.8004, "price": 1.83}, "161125": {"name": "标普500", "est_nav": 3.1220651217690176, "nav": 3.1443, "price": 3.199}, "161124": {"name": "香港小盘", "est_nav": 1.0263, "nav": 1.0263, "price": 1.019}, "162411": {"name": "华宝油气", "est_nav": 0.9038072269717103, "nav": 0.8924, "price": 0.889}, "162415": {"name": "美国消费", "est_nav": 2.8817542210673595, "nav": 2.902, "price": 2.891}, "162719": {"name": "石油LOF", "est_nav": 2.746019321525804, "nav": 2.7035, "price": 2.703}, "160416": {"name": "石油基金", "est_nav": 2.1201918092774874, "nav": 2.1029, "price": 2.094}, "164824": {"name": "印度基金", "est_nav": 1.2658257473993402, "nav": 1.2825, "price": 1.255}, "501225": {"name": "全球芯片", "est_nav": 3.3909153527547353, "nav": 3.3418, "price": 4.545}, "160140": {"name": "美国精选", "est_nav": 1.3875136471530818, "nav": 1.38, "price": 1.38}, "160644": {"name": "港美互联", "est_nav": 2.113638508741523, "nav": 2.0982, "price": 2.307}, "160719": {"name": "嘉实黄金", "est_nav": 1.9967390602826662, "nav": 2.017, "price": 1.988}, "160723": {"name": "嘉实原油", "est_nav": 2.1553856038011188, "nav": 2.1091, "price": 2.253}, "161116": {"name": "黄金主题", "est_nav": 1.6559273935601546, "nav": 1.6721, "price": 1.656}, "161129": {"name": "原油易达", "est_nav": 1.7954644727711309, "nav": 1.7566, "price": 1.862}, "163208": {"name": "全球油气", "est_nav": 1.3329970627060408, "nav": 1.315, "price": 1.314}, "164701": {"name": "黄金LOF", "est_nav": 1.7472848109084183, "nav": 1.766, "price": 1.744}, "165513": {"name": "中信保诚", "est_nav": 1.054066851742602, "nav": 1.065, "price": 1.053}, "501018": {"name": "南方原油", "est_nav": 1.8965188477009143, "nav": 1.8427, "price": 2.023}, "501312": {"name": "海外科技", "est_nav": 2.4007543482808296, "nav": 2.4188, "price": 2.399}, "164906": {"name": "中概互联", "est_nav": 0.9958802245622737, "nav": 1.019, "price": 0.988}};
     const FUND_CODES = Object.keys(VALUATION_DATA);
     let sortCol = "rate", sortAsc = false;
     let currentPrices = {};
@@ -137,7 +137,7 @@
             const rateClass = f.rate !== null ? (f.rate >= 0 ? "positive" : "negative") : "";
             let extra = "";
             if (f.code === "164906" && f._kweb_impact !== undefined) {
-                extra = `<br><span class="kweb-impact">实时持仓：${f._kweb_impact.toFixed(2)}%</span>`;
+                extra = `<br><span class="kweb-impact">实时港股持仓：${f._kweb_impact.toFixed(2)}%</span>`;
             }
             if (f.code === "161124" && f._hssi_change !== undefined) {
                 extra = `<br><span class="hssi-impact">指数涨跌：${f._hssi_change.toFixed(2)}%</span>`;
@@ -148,7 +148,7 @@
                 <td>${priceStr}</td>
                 <td>${estStr}</td>
                 <td><span class="rate-badge ${rateClass}">${rateStr}</span></td>
-            </tr>`;
+            </table>`;
         }
         document.getElementById("tableBody").innerHTML = html || '<tr><td colspan="5">无数据</td></tr>';
     }
@@ -168,19 +168,35 @@
                     if (!isNaN(price) && price > 0.001 && price < 10000) currentPrices[code] = price;
                 }
             }
+            // 只获取中概互联持仓中的港股部分（不包含美股）
+            const hkOnly = {
+                '0700HK': 8.6,
+                '9988HK': 8.2,
+                '3690HK': 6.3,
+                '9999HK': 5.6,
+                '9618HK': 4.5,
+                '9888HK': 4.7,
+                '2423HK': 4.3,
+                '6618HK': 3.1
+            };
+            const symbols = Object.keys(hkOnly).map(s => 'hk' + s.slice(0, -2)).join(',');
             const kwScript = document.createElement('script');
-            kwScript.src = 'https://web.sqt.gtimg.cn/q=hk00700,hk09988,hk03690,hk09999,hk09618,hk09888,hk02423,hk06618,usPDD,usYMM';
+            kwScript.src = `https://web.sqt.gtimg.cn/q=${symbols}`;
             kwScript.onload = function() {
-                const stocks = {'0700HK':8.6,'9988HK':8.2,'3690HK':6.3,'9999HK':5.6,'9618HK':4.5,'9888HK':4.7,'2423HK':4.3,'6618HK':3.1,'PDD':7.3,'YMM':3.4};
-                let impact = 0;
-                for (const [code, w] of Object.entries(stocks)) {
-                    const raw = window[`v_${code}`];
+                let totalWeight = 0;
+                let weightedChange = 0;
+                for (const [code, w] of Object.entries(hkOnly)) {
+                    const raw = window[`v_hk${code.slice(0, -2)}`];
                     if (raw) {
                         const parts = raw.split('~');
                         const change = parseFloat(parts[5]);
-                        if (!isNaN(change)) impact += change * w / 100;
+                        if (!isNaN(change)) {
+                            weightedChange += change * w;
+                            totalWeight += w;
+                        }
                     }
                 }
+                const impact = totalWeight > 0 ? weightedChange / totalWeight : 0;
                 currentPrices['_kweb_impact'] = impact;
                 const hsScript = document.createElement('script');
                 hsScript.src = 'https://web.sqt.gtimg.cn/q=hkHSSI';
