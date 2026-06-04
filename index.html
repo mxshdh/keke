@@ -148,7 +148,7 @@
                 <td>${priceStr}</td>
                 <td>${estStr}</td>
                 <td><span class="rate-badge ${rateClass}">${rateStr}</span></td>
-            </table>`;
+            </tr>`;
         }
         document.getElementById("tableBody").innerHTML = html || '<tr><td colspan="5">无数据</td></tr>';
     }
@@ -168,7 +168,7 @@
                     if (!isNaN(price) && price > 0.001 && price < 10000) currentPrices[code] = price;
                 }
             }
-            // 只获取中概互联持仓中的港股部分（不包含美股）
+            // 只获取中概互联持仓中的港股部分（权重与 holdings_config.csv 一致）
             const hkOnly = {
                 '0700HK': 8.6,
                 '9988HK': 8.2,
@@ -198,6 +198,7 @@
                 }
                 const impact = totalWeight > 0 ? weightedChange / totalWeight : 0;
                 currentPrices['_kweb_impact'] = impact;
+                // 继续获取香港小盘指数
                 const hsScript = document.createElement('script');
                 hsScript.src = 'https://web.sqt.gtimg.cn/q=hkHSSI';
                 hsScript.onload = function() {
