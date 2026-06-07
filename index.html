@@ -16,6 +16,8 @@
         .container { max-width: 100%; margin: 0 auto; }
         h1 { font-size: 14px; margin: 6px 0 8px; }
         .toolbar { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
+        .navbar { display: flex; gap: 10px; margin-bottom: 12px; background: white; padding: 6px 12px; border-radius: 8px; }
+        .navbar a { text-decoration: none; color: #3b82f6; font-size: 12px; }
         button {
             background: #3b82f6; color: white; border: none;
             padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;
@@ -58,6 +60,10 @@
 </head>
 <body>
 <div class="container">
+    <div class="navbar">
+        <a href="./">QDII估值</a>
+        <a href="./domestic.html">国内LOF</a>
+    </div>
     <h1>📊 估值看板</h1>
     <div class="toolbar">
         <button onclick="refreshPrices()">🔄 刷新</button>
@@ -168,7 +174,7 @@
                     if (!isNaN(price) && price > 0.001 && price < 10000) currentPrices[code] = price;
                 }
             }
-            // 只获取中概互联持仓中的港股部分（权重与 holdings_config.csv 一致）
+            // 中概互联港股持仓
             const hkOnly = {
                 '0700HK': 8.6,
                 '9988HK': 8.2,
@@ -179,14 +185,15 @@
                 '2423HK': 4.3,
                 '6618HK': 3.1
             };
-            const symbols = Object.keys(hkOnly).map(s => 'hk' + s.slice(0, -2)).join(',');
+            const symbols = Object.keys(hkOnly).map(s => 'hk' + s.slice(0, -2).padStart(5, '0')).join(',');
             const kwScript = document.createElement('script');
             kwScript.src = `https://web.sqt.gtimg.cn/q=${symbols}`;
             kwScript.onload = function() {
                 let totalWeight = 0;
                 let weightedChange = 0;
                 for (const [code, w] of Object.entries(hkOnly)) {
-                    const raw = window[`v_hk${code.slice(0, -2)}`];
+                    const hkCode = code.slice(0, -2).padStart(5, '0');
+                    const raw = window[`v_hk${hkCode}`];
                     if (raw) {
                         const parts = raw.split('~');
                         const change = parseFloat(parts[5]);
@@ -198,7 +205,6 @@
                 }
                 const impact = totalWeight > 0 ? weightedChange / totalWeight : 0;
                 currentPrices['_kweb_impact'] = impact;
-                // 继续获取香港小盘指数
                 const hsScript = document.createElement('script');
                 hsScript.src = 'https://web.sqt.gtimg.cn/q=hkHSSI';
                 hsScript.onload = function() {
