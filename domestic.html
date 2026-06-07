@@ -31,7 +31,7 @@ th{background:#f8fafc;font-weight:600;color:#64748b;cursor:pointer;}
 <div id="errorMsg" class="error-msg"></div>
 </div>
 <script>
-const STATIC_NAV = {"164906": {"nav": 0.9757, "date": "2026-06-04"}, "160630": {"nav": 1.0885, "date": "2026-06-05"}, "160632": {"nav": 0.2717, "date": "2026-06-05"}, "161024": {"nav": 1.236, "date": "2026-06-05"}, "161027": {"nav": 0.97, "date": "2026-06-05"}, "161032": {"nav": 2.53, "date": "2026-06-05"}, "165520": {"nav": 2.8521, "date": "2026-06-05"}, "168204": {"nav": 2.342, "date": "2026-06-05"}, "502003": {"nav": 1.5449, "date": "2026-06-05"}, "501302": {"nav": 1.1342, "date": "2026-06-05"}, "160924": {"nav": 0.9941, "date": "2026-06-05"}, "161831": {"nav": 0.7336, "date": "2026-06-05"}, "160322": {"nav": 1.1083, "date": "2026-06-05"}};
+const STATIC_NAV = {"164906": {"nav": 0.9757, "date": "2026-06-04"}, "160630": {"nav": 1.0885, "date": "2026-06-05"}, "160632": {"nav": 0.2717, "date": "2026-06-05"}, "161024": {"nav": 1.236, "date": "2026-06-05"}, "161027": {"nav": 0.97, "date": "2026-06-05"}, "161032": {"nav": 2.53, "date": "2026-06-05"}, "165520": {"nav": 2.8521, "date": "2026-06-05"}, "168204": {"nav": 2.342, "date": "2026-06-05"}, "502003": {"nav": 1.5449, "date": "2026-06-05"}, "501302": {"nav": 1.1342, "date": "2026-06-05"}, "160924": {"nav": 0.9941, "date": "2026-06-05"}, "161831": {"nav": 0.7336, "date": "2026-06-05"}, "160322": {"nav": 1.1083, "date": "2026-06-05"}, "160223": {"nav": 2.1898, "date": "2026-06-05"}};
 const funds = [{"code": "160223", "name": "创业板LOF", "indexCode": "sz399006"}, {"code": "160630", "name": "国防LOF", "indexCode": "sz399973"}, {"code": "160632", "name": "酒LOF", "indexCode": "sz399997"}, {"code": "161024", "name": "军工LOF", "indexCode": "sz399967"}, {"code": "161027", "name": "证券LOF", "indexCode": "sz399975"}, {"code": "161032", "name": "煤炭龙头LOF", "indexCode": "sz399998"}, {"code": "165520", "name": "有色LOF", "indexCode": "sz399395"}, {"code": "168204", "name": "煤炭LOF", "indexCode": "sz399998"}, {"code": "502003", "name": "军工LOF", "indexCode": "sz399967"}, {"code": "501302", "name": "恒生指数基金LOF", "indexCode": "hkHSI"}, {"code": "160924", "name": "恒生指数LOF", "indexCode": "hkHSI"}, {"code": "161831", "name": "恒生国企LOF", "indexCode": "hkHSCEI"}, {"code": "160322", "name": "港股精选LOF", "indexCode": "hkHSI"}, {"code": "164906", "name": "中概互联", "indexCode": "usKWEB"}];
 let priceData = {}, indexChangeData = {}, currentSort = { col: 'code', asc: true };
 
@@ -57,15 +57,16 @@ function fetchPriceAndIndex(){
         script.src=`https://web.sqt.gtimg.cn/q=${allSymbols}`;
         script.onload=()=>{
             clearTimeout(timeoutId);
+            // 第一步：收集所有数据，不删除变量
             for(const f of funds){
-                const priceVar=`v_${f.code.startsWith('5')?'sh':'sz'}${f.code}`;
+                const priceVar = `v_${f.code.startsWith('5')?'sh':'sz'}${f.code}`;
                 if(window[priceVar]){
                     const parts=window[priceVar].split('~');
                     let price=parseFloat(parts[3]);
                     if(isNaN(price)||price<=0)price=parseFloat(parts[12]);
                     if(!isNaN(price)&&price>0)priceData[f.code]=price;
                 }
-                const indexVar=`v_${f.indexCode}`;
+                const indexVar = `v_${f.indexCode}`;
                 if(window[indexVar]){
                     const str=window[indexVar];
                     const regex=/(?:~-?\d+\.\d+)~(-?\d+\.\d+)~/g;
@@ -76,7 +77,11 @@ function fetchPriceAndIndex(){
                     }
                     if(validChange!==null)indexChangeData[f.code]=validChange;
                 }
-                delete window[priceVar]; delete window[indexVar];
+            }
+            // 第二步：统一删除全局变量
+            for(const f of funds){
+                delete window[`v_${f.code.startsWith('5')?'sh':'sz'}${f.code}`];
+                delete window[`v_${f.indexCode}`];
             }
             resolve();
         };
@@ -92,7 +97,7 @@ function getDataArray(){
         const price=priceData[f.code];
         const idxChange=indexChangeData[f.code];
         let finalNav=null, premium=null;
-        if(nav&&idxChange!==undefined){
+        if(nav!==null && idxChange!==undefined){
             finalNav=nav*(1+idxChange/100);
             if(price!==undefined)premium=(price/finalNav-1)*100;
         }
@@ -115,11 +120,11 @@ function updateTable(){
     let html='';
     for(const item of sorted){
         const price=item.price!==undefined?item.price.toFixed(3):'—';
-        const nav=item.nav?item.nav.toFixed(4):'—';
+        const nav=item.nav!==null?item.nav.toFixed(4):'—';
         const change=item.indexChange!==undefined?item.indexChange:null;
         const changeStr=change!==null?(change>0?'+':'')+change.toFixed(2)+'%':'—';
         const changeClass=change!==null&&change>=0?'positive':'negative';
-        const finalNav=item.finalNav?item.finalNav.toFixed(4):'—';
+        const finalNav=item.finalNav!==null?item.finalNav.toFixed(4):'—';
         const premium=item.premium!==null?(item.premium>0?'+':'')+item.premium.toFixed(2)+'%':'—';
         const premiumClass=item.premium!==null&&item.premium>=0?'positive':'negative';
         html+=`<tr><td>${item.code}</td><td>${item.name}</td><td>${price}</td><td>${nav}</td><td class="${changeClass}">${changeStr}</td><td>${finalNav}</td><td class="${premiumClass}">${premium}</td></tr>`;
