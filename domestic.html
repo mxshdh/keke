@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>国内LOF实时监控</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f7fb; padding: 12px; color: #1e293b; }
+        .container { max-width: 100%; margin: 0 auto; }
+        h1 { font-size: 18px; margin-bottom: 8px; }
+        button { background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; width: 100%; margin-bottom: 16px; }
+        button:active { background: #2563eb; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; background: white; border-radius: 12px; border-collapse: collapse; font-size: 12px; }
+        th, td { padding: 8px 6px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f8fafc; font-weight: 600; color: #64748b; cursor: pointer; user-select: none; }
+        th:hover { background: #e2e8f0; }
+        .positive { color: #ef4444; }
+        .negative { color: #10b981; }
+        .sort-icon { font-size: 10px; margin-left: 4px; }
+        .update-time { text-align: center; font-size: 10px; color: #94a3b8; margin-top: 12px; }
+        .note { font-size: 10px; color: #94a3b8; margin-top: 16px; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📊 国内LOF实时监控</h1>
+    <button id="refreshBtn">🔄 刷新全部数据</button>
+    <div class="table-wrapper">
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th data-col="code">代码 <span class="sort-icon">▼</span></th>
+                    <th data-col="name">名称</th>
+                    <th data-col="price">股价</th>
+                    <th data-col="nav">净值</th>
+                    <th data-col="indexChange">当日涨跌幅</th>
+                    <th data-col="finalNav">最终净值</th>
+                    <th data-col="premium">最终溢价率</th>
+                </tr>
+            </thead>
+            <tbody><tr><td colspan="7" style="text-align:center;">加载中...</td></tr></tbody>
+        </table>
+    </div>
+    <div class="update-time" id="updateTime"></div>
+    <div class="note">净值来源：基金公司官方数据（静态嵌入，每日更新） | 股价和指数涨跌幅来源：腾讯财经</div>
+</div>
+
+<script>
+    // 静态净值数据（由 calc_valuation.py 生成嵌入）
+    const STATIC_NAV = {"161124": {"nav": 0.9864, "date": "2026-06-05"}, "164906": {"nav": 0.9757, "date": "2026-06-04"}, "160630": {"nav": 1.0885, "date": "2026-06-05"}, "160632": {"nav": 0.2717, "date": "2026-06-05"}, "161024": {"nav": 1.236, "date": "2026-06-05"}, "161027": {"nav": 0.97, "date": "2026-06-05"}, "161032": {"nav": 2.53, "date": "2026-06-05"}, "165520": {"nav": 2.8521, "date": "2026-06-05"}, "168204": {"nav": 2.342, "date": "2026-06-05"}, "502003": {"nav": 1.5449, "date": "2026-06-05"}, "501025": {"nav": 1.7537, "date": "2026-06-05"}, "501302": {"nav": 1.1342, "date": "2026-06-05"}, "160924": {"nav": 0.9941, "date": "2026-06-05"}, "161831": {"nav": 0.7336, "date": "2026-06-05"}, "501311": {"nav": 0.9474, "date": "2026-06-05"}, "501301": {"nav": 1.2307, "date": "2026-06-05"}, "160322": {"nav": 1.1083, "date": "2026-06-05"}};
+
+    const funds = [{"code": "160223", "name": "创业板LOF", "indexCode": "sz399006"}, {"code": "160630", "name": "国防LOF", "indexCode": "sz399973"}, {"code": "160632", "name": "酒LOF", "indexCode": "sz399997"}, {"code": "161024", "name": "军工LOF", "indexCode": "sz399967"}, {"code": "161027", "name": "证券LOF", "indexCode": "sz399975"}, {"code": "161032", "name": "煤炭龙头LOF", "indexCode": "sz399998"}, {"code": "165520", "name": "有色LOF", "indexCode": "sz399395"}, {"code": "168204", "name": "煤炭LOF", "indexCode": "sz399998"}, {"code": "502003", "name": "军工LOF", "indexCode": "sz399967"}, {"code": "501025", "name": "香港银行LOF", "indexCode": "hkHKBANK"}, {"code": "501302", "name": "恒生指数基金LOF", "indexCode": "hkHSI"}, {"code": "160924", "name": "恒生指数LOF", "indexCode": "hkHSI"}, {"code": "161831", "name": "恒生国企LOF", "indexCode": "hkHSCEI"}, {"code": "161124", "name": "港股小盘LOF", "indexCode": "hkHSSI"}, {"code": "501311", "name": "新经济港股通LOF", "indexCode": "hkHSNE"}, {"code": "501301", "name": "香港大盘LOF", "indexCode": "hkHSI30"}, {"code": "160322", "name": "港股精选LOF", "indexCode": "hkHSI"}, {"code": "164906", "name": "中概互联", "indexCode": "usKWEB"}];
+
+    let priceData = {};
+    let indexChangeData = {};
+
+    let currentSort = { col: 'code', asc: true };
+
+    function fetchPriceAndIndex() {
+        return new Promise((resolve) => {
+            const priceSymbols = funds.map(f => (f.code.startsWith('5') ? 'sh' : 'sz') + f.code).join(',');
+            const indexSymbols = funds.map(f => f.indexCode).join(',');
+            const allSymbols = `${priceSymbols},${indexSymbols}`;
+            const script = document.createElement('script');
+            script.src = `https://web.sqt.gtimg.cn/q=${allSymbols}`;
+            script.onload = () => {
+                for (const f of funds) {
+                    const priceVar = `v_${f.code.startsWith('5') ? 'sh' : 'sz'}${f.code}`;
+                    if (window[priceVar]) {
+                        const parts = window[priceVar].split('~');
+                        let price = parseFloat(parts[3]);
+                        if (isNaN(price) || price <= 0) price = parseFloat(parts[12]);
+                        if (!isNaN(price) && price > 0) priceData[f.code] = price;
+                    }
+                }
+                for (const f of funds) {
+                    const indexVar = `v_${f.indexCode}`;
+                    if (window[indexVar]) {
+                        const str = window[indexVar];
+                        const regex = /~(-?\d+\.\d+)~(-?\d+\.\d+)~/g;
+                        let match;
+                        let validChange = null;
+                        while ((match = regex.exec(str)) !== null) {
+                            const change = parseFloat(match[2]);
+                            if (!isNaN(change) && Math.abs(change) <= 20) {
+                                validChange = change;
+                                break;
+                            }
+                        }
+                        if (validChange !== null) indexChangeData[f.code] = validChange;
+                    }
+                }
+                for (const f of funds) {
+                    delete window[`v_${f.code.startsWith('5') ? 'sh' : 'sz'}${f.code}`];
+                    delete window[`v_${f.indexCode}`];
+                }
+                resolve();
+            };
+            script.onerror = () => {
+                console.error('腾讯接口请求失败');
+                resolve();
+            };
+            document.head.appendChild(script);
+        });
+    }
+
+    function getDataArray() {
+        return funds.map(f => {
+            const navObj = STATIC_NAV[f.code];
+            const nav = navObj ? navObj.nav : null;
+            const price = priceData[f.code] !== undefined ? priceData[f.code] : null;
+            const indexChange = indexChangeData[f.code] !== undefined ? indexChangeData[f.code] : null;
+            let finalNav = null;
+            let premium = null;
+            if (nav !== null && indexChange !== null) {
+                finalNav = nav * (1 + indexChange / 100);
+                if (price !== null) {
+                    premium = (price / finalNav - 1) * 100;
+                }
+            }
+            return {
+                code: f.code,
+                name: f.name,
+                price: price,
+                nav: nav,
+                indexChange: indexChange,
+                finalNav: finalNav,
+                premium: premium
+            };
+        });
+    }
+
+    function sortData(data, col, asc) {
+        return data.sort((a, b) => {
+            if (col === 'code' || col === 'name') {
+                let va = a[col], vb = b[col];
+                return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+            } else if (col === 'price') {
+                let va = a.price !== null ? a.price : -Infinity;
+                let vb = b.price !== null ? b.price : -Infinity;
+                return asc ? va - vb : vb - va;
+            } else if (col === 'nav') {
+                let va = a.nav !== null ? a.nav : -Infinity;
+                let vb = b.nav !== null ? b.nav : -Infinity;
+                return asc ? va - vb : vb - va;
+            } else if (col === 'indexChange') {
+                let va = a.indexChange !== null ? a.indexChange : -Infinity;
+                let vb = b.indexChange !== null ? b.indexChange : -Infinity;
+                return asc ? va - vb : vb - va;
+            } else if (col === 'finalNav') {
+                let va = a.finalNav !== null ? a.finalNav : -Infinity;
+                let vb = b.finalNav !== null ? b.finalNav : -Infinity;
+                return asc ? va - vb : vb - va;
+            } else if (col === 'premium') {
+                let va = a.premium !== null ? a.premium : -Infinity;
+                let vb = b.premium !== null ? b.premium : -Infinity;
+                return asc ? va - vb : vb - va;
+            }
+            return 0;
+        });
+    }
+
+    function updateTable() {
+        const data = getDataArray();
+        const sorted = sortData(data, currentSort.col, currentSort.asc);
+        const tbody = document.querySelector('#dataTable tbody');
+        let html = '';
+        for (const item of sorted) {
+            const price = item.price !== null ? item.price.toFixed(3) : '—';
+            const nav = item.nav !== null ? item.nav.toFixed(4) : '—';
+            const indexChange = item.indexChange !== null ? item.indexChange : null;
+            const changeStr = (indexChange !== null) ? (indexChange > 0 ? '+' : '') + indexChange.toFixed(2) + '%' : '—';
+            const changeClass = (indexChange !== null && indexChange >= 0) ? 'positive' : 'negative';
+            const finalNav = item.finalNav !== null ? item.finalNav.toFixed(4) : '—';
+            const premium = item.premium !== null ? (item.premium > 0 ? '+' : '') + item.premium.toFixed(2) + '%' : '—';
+            const premiumClass = (item.premium !== null && item.premium >= 0) ? 'positive' : 'negative';
+            html += `<tr>
+                <td>${item.code}</td>
+                <td>${item.name}</td>
+                <td>${price}</td>
+                <td>${nav}</td>
+                <td class="${changeClass}">${changeStr}</td>
+                <td>${finalNav}</td>
+                <td class="${premiumClass}">${premium}</td>
+            </tr>`;
+        }
+        tbody.innerHTML = html;
+        document.getElementById('updateTime').innerText = '更新于：' + new Date().toLocaleTimeString();
+        updateSortIcons();
+    }
+
+    function updateSortIcons() {
+        const headers = document.querySelectorAll('#dataTable th');
+        headers.forEach(th => {
+            const col = th.getAttribute('data-col');
+            const iconSpan = th.querySelector('.sort-icon');
+            if (col === currentSort.col) {
+                iconSpan.textContent = currentSort.asc ? '▲' : '▼';
+            } else {
+                iconSpan.textContent = '';
+            }
+        });
+    }
+
+    async function refreshAll() {
+        const btn = document.getElementById('refreshBtn');
+        btn.disabled = true;
+        btn.textContent = '刷新中...';
+        await fetchPriceAndIndex();
+        updateTable();
+        btn.disabled = false;
+        btn.textContent = '🔄 刷新全部数据';
+    }
+
+    function setupSorting() {
+        const headers = document.querySelectorAll('#dataTable th');
+        headers.forEach(th => {
+            th.addEventListener('click', () => {
+                const col = th.getAttribute('data-col');
+                if (col === currentSort.col) {
+                    currentSort.asc = !currentSort.asc;
+                } else {
+                    currentSort.col = col;
+                    currentSort.asc = true;
+                }
+                updateTable();
+            });
+        });
+    }
+
+    refreshAll();
+    setupSorting();
+</script>
+</body>
+</html>
