@@ -34,6 +34,7 @@ th{background:#f8fafc;font-weight:600;color:#64748b;cursor:pointer;}
 const STATIC_NAV = {"164906": {"nav": 0.9757, "date": "2026-06-04"}, "160630": {"nav": 1.0885, "date": "2026-06-05"}, "160632": {"nav": 0.2717, "date": "2026-06-05"}, "161024": {"nav": 1.236, "date": "2026-06-05"}, "161027": {"nav": 0.97, "date": "2026-06-05"}, "161032": {"nav": 2.53, "date": "2026-06-05"}, "165520": {"nav": 2.8521, "date": "2026-06-05"}, "168204": {"nav": 2.342, "date": "2026-06-05"}, "502003": {"nav": 1.5449, "date": "2026-06-05"}, "501302": {"nav": 1.1342, "date": "2026-06-05"}, "160924": {"nav": 0.9941, "date": "2026-06-05"}, "161831": {"nav": 0.7336, "date": "2026-06-05"}, "160322": {"nav": 1.1083, "date": "2026-06-05"}};
 const funds = [{"code": "160223", "name": "创业板LOF", "indexCode": "sz399006"}, {"code": "160630", "name": "国防LOF", "indexCode": "sz399973"}, {"code": "160632", "name": "酒LOF", "indexCode": "sz399997"}, {"code": "161024", "name": "军工LOF", "indexCode": "sz399967"}, {"code": "161027", "name": "证券LOF", "indexCode": "sz399975"}, {"code": "161032", "name": "煤炭龙头LOF", "indexCode": "sz399998"}, {"code": "165520", "name": "有色LOF", "indexCode": "sz399395"}, {"code": "168204", "name": "煤炭LOF", "indexCode": "sz399998"}, {"code": "502003", "name": "军工LOF", "indexCode": "sz399967"}, {"code": "501302", "name": "恒生指数基金LOF", "indexCode": "hkHSI"}, {"code": "160924", "name": "恒生指数LOF", "indexCode": "hkHSI"}, {"code": "161831", "name": "恒生国企LOF", "indexCode": "hkHSCEI"}, {"code": "160322", "name": "港股精选LOF", "indexCode": "hkHSI"}, {"code": "164906", "name": "中概互联", "indexCode": "usKWEB"}];
 let priceData = {}, indexChangeData = {}, currentSort = { col: 'code', asc: true };
+
 function renderNavOnly(){
     let html='';
     for(const f of funds){
@@ -42,8 +43,10 @@ function renderNavOnly(){
         html+=`<tr><td>${f.code}</td><td>${f.name}</td><td>—</td><td>${nav}</td><td>—</td><td>—</td><td>—</td></tr>`;
     }
     document.querySelector('#dataTable tbody').innerHTML=html;
-    document.getElementById('updateTime').innerText='静态净值日期：'+(Object.values(STATIC_NAV)[0]?.date||'未知');
+    const updateTimeDiv = document.getElementById('updateTime');
+    if(updateTimeDiv) updateTimeDiv.innerText='静态净值日期：'+(Object.values(STATIC_NAV)[0]?.date||'未知');
 }
+
 function fetchPriceAndIndex(){
     return new Promise((resolve,reject)=>{
         const timeoutId=setTimeout(()=>reject(new Error('请求超时')),15000);
@@ -81,6 +84,7 @@ function fetchPriceAndIndex(){
         document.head.appendChild(script);
     });
 }
+
 function getDataArray(){
     return funds.map(f=>{
         const navObj=STATIC_NAV[f.code];
@@ -95,6 +99,7 @@ function getDataArray(){
         return {code:f.code,name:f.name,price,nav,indexChange:idxChange,finalNav,premium};
     });
 }
+
 function sortData(data,col,asc){
     return data.sort((a,b)=>{
         let va=a[col]??(col==='code'||col==='name'?'':-Infinity);
@@ -103,6 +108,7 @@ function sortData(data,col,asc){
         return asc?va-vb:vb-va;
     });
 }
+
 function updateTable(){
     const data=getDataArray();
     const sorted=sortData(data,currentSort.col,currentSort.asc);
@@ -119,16 +125,24 @@ function updateTable(){
         html+=`<tr><td>${item.code}</td><td>${item.name}</td><td>${price}</td><td>${nav}</td><td class="${changeClass}">${changeStr}</td><td>${finalNav}</td><td class="${premiumClass}">${premium}</td></tr>`;
     }
     document.querySelector('#dataTable tbody').innerHTML=html;
-    document.getElementById('updateTime').innerText='更新于：'+new Date().toLocaleTimeString();
+    const updateTimeDiv = document.getElementById('updateTime');
+    if(updateTimeDiv) updateTimeDiv.innerText='更新于：'+new Date().toLocaleTimeString();
 }
-function updateSortIcons(){}
+
 async function refreshData(){
     const btn=document.getElementById('refreshBtn'),errorDiv=document.getElementById('errorMsg');
+    if(!btn||!errorDiv) return;
     btn.disabled=true;btn.textContent='刷新中...';errorDiv.innerText='';
-    try{await fetchPriceAndIndex();updateTable();}
-    catch(err){errorDiv.innerText='刷新失败：'+err.message;}
-    finally{btn.disabled=false;btn.textContent='🔄 刷新股价/指数';}
+    try{
+        await fetchPriceAndIndex();
+        updateTable();
+    }catch(err){
+        errorDiv.innerText='刷新失败：'+err.message;
+    }finally{
+        btn.disabled=false;btn.textContent='🔄 刷新股价/指数';
+    }
 }
+
 function setupSorting(){
     document.querySelectorAll('#dataTable th').forEach(th=>{
         th.addEventListener('click',()=>{
@@ -139,7 +153,10 @@ function setupSorting(){
         });
     });
 }
-renderNavOnly();setupSorting();document.getElementById('refreshBtn').addEventListener('click',refreshData);
+
+renderNavOnly();
+setupSorting();
+document.getElementById('refreshBtn').addEventListener('click',refreshData);
 </script>
 </body>
 </html>
