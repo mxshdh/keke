@@ -1,281 +1,145 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>国内LOF实时监控</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f7fb; padding: 12px; color: #1e293b; }
-        .container { max-width: 100%; margin: 0 auto; }
-        h1 { font-size: 18px; margin-bottom: 8px; }
-        .navbar { display: flex; gap: 10px; margin-bottom: 12px; background: white; padding: 6px 12px; border-radius: 8px; }
-        .navbar a { text-decoration: none; color: #3b82f6; font-size: 12px; }
-        button { background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; width: 100%; margin-bottom: 16px; }
-        button:active { background: #2563eb; }
-        .table-wrapper { overflow-x: auto; }
-        table { width: 100%; background: white; border-radius: 12px; border-collapse: collapse; font-size: 12px; }
-        th, td { padding: 8px 6px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background: #f8fafc; font-weight: 600; color: #64748b; cursor: pointer; user-select: none; }
-        th:hover { background: #e2e8f0; }
-        .positive { color: #ef4444; }
-        .negative { color: #10b981; }
-        .sort-icon { font-size: 10px; margin-left: 4px; }
-        .update-time { text-align: center; font-size: 10px; color: #94a3b8; margin-top: 12px; }
-        .note { font-size: 10px; color: #94a3b8; margin-top: 16px; text-align: center; }
-        .error-msg { color: #f59e0b; font-size: 11px; text-align: center; margin-top: 8px; }
-    </style>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>国内LOF实时监控</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,sans-serif;background:#f5f7fb;padding:12px;color:#1e293b;}
+.container{max-width:100%;margin:0 auto;}
+.navbar{display:flex;gap:10px;margin-bottom:12px;background:#fff;padding:6px 12px;border-radius:8px;}
+.navbar a{text-decoration:none;color:#3b82f6;font-size:12px;}
+button{background:#3b82f6;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:14px;cursor:pointer;width:100%;margin-bottom:16px;}
+.table-wrapper{overflow-x:auto;}
+table{width:100%;background:#fff;border-radius:12px;border-collapse:collapse;font-size:12px;}
+th,td{padding:8px 6px;text-align:left;border-bottom:1px solid #e2e8f0;}
+th{background:#f8fafc;font-weight:600;color:#64748b;cursor:pointer;}
+.positive{color:#ef4444;}
+.negative{color:#10b981;}
+.update-time{text-align:center;font-size:10px;color:#94a3b8;margin-top:12px;}
+.note{font-size:10px;color:#94a3b8;margin-top:16px;text-align:center;}
+.error-msg{color:#f59e0b;font-size:11px;text-align:center;margin-top:8px;}
+</style>
 </head>
 <body>
 <div class="container">
-    <div class="navbar">
-        <a href="./">QDII估值</a>
-        <a href="./domestic.html">国内LOF</a>
-    </div>
-    <h1>📊 国内LOF实时监控</h1>
-    <button id="refreshBtn">🔄 刷新股价/指数</button>
-    <div class="table-wrapper">
-        <table id="dataTable">
-            <thead>
-                <tr>
-                    <th data-col="code">代码 <span class="sort-icon">▼</span></th>
-                    <th data-col="name">名称</th>
-                    <th data-col="price">股价</th>
-                    <th data-col="nav">净值</th>
-                    <th data-col="indexChange">当日涨跌幅</th>
-                    <th data-col="finalNav">最终净值</th>
-                    <th data-col="premium">最终溢价率</th>
-                </tr>
-            </thead>
-            <tbody><tr><td colspan="7" style="text-align:center;">加载静态净值...</td></tr>
-            </tbody>
-        </table>
-    </div>
-    <div class="update-time" id="updateTime"></div>
-    <div class="note">净值来源：基金公司官方数据（静态嵌入，每日更新） | 股价和指数涨跌幅来源：腾讯财经</div>
-    <div id="errorMsg" class="error-msg"></div>
+<div class="navbar"><a href="./">QDII估值</a><a href="./domestic.html">国内LOF</a></div>
+<h1>📊 国内LOF实时监控</h1>
+<button id="refreshBtn">🔄 刷新股价/指数</button>
+<div class="table-wrapper"><table id="dataTable"><thead><tr><th data-col="code">代码</th><th data-col="name">名称</th><th data-col="price">股价</th><th data-col="nav">净值</th><th data-col="indexChange">当日涨跌幅</th><th data-col="finalNav">最终净值</th><th data-col="premium">最终溢价率</th></tr></thead><tbody><tr><td colspan="7">加载静态净值...</td></tr></tbody></table></div>
+<div class="update-time" id="updateTime"></div>
+<div class="note">净值来源：基金公司官方数据 | 股价和指数涨跌幅来源：腾讯财经</div>
+<div id="errorMsg" class="error-msg"></div>
 </div>
-
 <script>
-    const STATIC_NAV = {"164906": {"nav": 0.9757, "date": "2026-06-04"}, "160630": {"nav": 1.0885, "date": "2026-06-05"}, "160632": {"nav": 0.2717, "date": "2026-06-05"}, "161024": {"nav": 1.236, "date": "2026-06-05"}, "161027": {"nav": 0.97, "date": "2026-06-05"}, "161032": {"nav": 2.53, "date": "2026-06-05"}, "165520": {"nav": 2.8521, "date": "2026-06-05"}, "168204": {"nav": 2.342, "date": "2026-06-05"}, "502003": {"nav": 1.5449, "date": "2026-06-05"}, "501302": {"nav": 1.1342, "date": "2026-06-05"}, "160924": {"nav": 0.9941, "date": "2026-06-05"}, "161831": {"nav": 0.7336, "date": "2026-06-05"}, "160322": {"nav": 1.1083, "date": "2026-06-05"}};
-    const funds = [{"code": "160223", "name": "创业板LOF", "indexCode": "sz399006"}, {"code": "160630", "name": "国防LOF", "indexCode": "sz399973"}, {"code": "160632", "name": "酒LOF", "indexCode": "sz399997"}, {"code": "161024", "name": "军工LOF", "indexCode": "sz399967"}, {"code": "161027", "name": "证券LOF", "indexCode": "sz399975"}, {"code": "161032", "name": "煤炭龙头LOF", "indexCode": "sz399998"}, {"code": "165520", "name": "有色LOF", "indexCode": "sz399395"}, {"code": "168204", "name": "煤炭LOF", "indexCode": "sz399998"}, {"code": "502003", "name": "军工LOF", "indexCode": "sz399967"}, {"code": "501302", "name": "恒生指数基金LOF", "indexCode": "hkHSI"}, {"code": "160924", "name": "恒生指数LOF", "indexCode": "hkHSI"}, {"code": "161831", "name": "恒生国企LOF", "indexCode": "hkHSCEI"}, {"code": "160322", "name": "港股精选LOF", "indexCode": "hkHSI"}, {"code": "164906", "name": "中概互联", "indexCode": "usKWEB"}];
-
-    let priceData = {};
-    let indexChangeData = {};
-    let currentSort = { col: 'code', asc: true };
-
-    function renderNavOnly() {
-        const tbody = document.querySelector('#dataTable tbody');
-        let html = '';
-        for (const f of funds) {
-            const navObj = STATIC_NAV[f.code];
-            const nav = navObj ? navObj.nav.toFixed(4) : '—';
-            html += `<tr>
-                <td>${f.code}</td>
-                <td>${f.name}</td>
-                <td>—</td>
-                <td>${nav}</td>
-                <td>—</td>
-                <td>—</td>
-                <td>—</td>
-            </table>`;
-        }
-        tbody.innerHTML = html;
-        document.getElementById('updateTime').innerText = '静态净值日期：' + (Object.values(STATIC_NAV)[0]?.date || '未知');
+const STATIC_NAV = {"164906": {"nav": 0.9757, "date": "2026-06-04"}, "160630": {"nav": 1.0885, "date": "2026-06-05"}, "160632": {"nav": 0.2717, "date": "2026-06-05"}, "161024": {"nav": 1.236, "date": "2026-06-05"}, "161027": {"nav": 0.97, "date": "2026-06-05"}, "161032": {"nav": 2.53, "date": "2026-06-05"}, "165520": {"nav": 2.8521, "date": "2026-06-05"}, "168204": {"nav": 2.342, "date": "2026-06-05"}, "502003": {"nav": 1.5449, "date": "2026-06-05"}, "501302": {"nav": 1.1342, "date": "2026-06-05"}, "160924": {"nav": 0.9941, "date": "2026-06-05"}, "161831": {"nav": 0.7336, "date": "2026-06-05"}, "160322": {"nav": 1.1083, "date": "2026-06-05"}};
+const funds = [{"code": "160223", "name": "创业板LOF", "indexCode": "sz399006"}, {"code": "160630", "name": "国防LOF", "indexCode": "sz399973"}, {"code": "160632", "name": "酒LOF", "indexCode": "sz399997"}, {"code": "161024", "name": "军工LOF", "indexCode": "sz399967"}, {"code": "161027", "name": "证券LOF", "indexCode": "sz399975"}, {"code": "161032", "name": "煤炭龙头LOF", "indexCode": "sz399998"}, {"code": "165520", "name": "有色LOF", "indexCode": "sz399395"}, {"code": "168204", "name": "煤炭LOF", "indexCode": "sz399998"}, {"code": "502003", "name": "军工LOF", "indexCode": "sz399967"}, {"code": "501302", "name": "恒生指数基金LOF", "indexCode": "hkHSI"}, {"code": "160924", "name": "恒生指数LOF", "indexCode": "hkHSI"}, {"code": "161831", "name": "恒生国企LOF", "indexCode": "hkHSCEI"}, {"code": "160322", "name": "港股精选LOF", "indexCode": "hkHSI"}, {"code": "164906", "name": "中概互联", "indexCode": "usKWEB"}];
+let priceData = {}, indexChangeData = {}, currentSort = { col: 'code', asc: true };
+function renderNavOnly(){
+    let html='';
+    for(const f of funds){
+        const navObj = STATIC_NAV[f.code];
+        const nav = navObj ? navObj.nav.toFixed(4) : '—';
+        html+=`<tr><td>${f.code}</td><td>${f.name}</td><td>—</td><td>${nav}</td><td>—</td><td>—</td><td>—</td></tr>`;
     }
-
-    function fetchPriceAndIndex() {
-        return new Promise((resolve, reject) => {
-            const timeoutId = setTimeout(() => {
-                reject(new Error('请求超时（15秒）'));
-            }, 15000);
-
-            const priceSymbols = funds.map(f => (f.code.startsWith('5') ? 'sh' : 'sz') + f.code).join(',');
-            const indexSymbols = funds.map(f => f.indexCode).join(',');
-            const allSymbols = `${priceSymbols},${indexSymbols}`;
-            const script = document.createElement('script');
-            script.src = `https://web.sqt.gtimg.cn/q=${allSymbols}`;
-            script.onload = () => {
-                clearTimeout(timeoutId);
-                for (const f of funds) {
-                    const priceVar = `v_${f.code.startsWith('5') ? 'sh' : 'sz'}${f.code}`;
-                    if (window[priceVar]) {
-                        const parts = window[priceVar].split('~');
-                        let price = parseFloat(parts[3]);
-                        if (isNaN(price) || price <= 0) price = parseFloat(parts[12]);
-                        if (!isNaN(price) && price > 0) priceData[f.code] = price;
+    document.querySelector('#dataTable tbody').innerHTML=html;
+    document.getElementById('updateTime').innerText='静态净值日期：'+(Object.values(STATIC_NAV)[0]?.date||'未知');
+}
+function fetchPriceAndIndex(){
+    return new Promise((resolve,reject)=>{
+        const timeoutId=setTimeout(()=>reject(new Error('请求超时')),15000);
+        const priceSymbols=funds.map(f=>(f.code.startsWith('5')?'sh':'sz')+f.code).join(',');
+        const indexSymbols=funds.map(f=>f.indexCode).join(',');
+        const allSymbols=`${priceSymbols},${indexSymbols}`;
+        const script=document.createElement('script');
+        script.src=`https://web.sqt.gtimg.cn/q=${allSymbols}`;
+        script.onload=()=>{
+            clearTimeout(timeoutId);
+            for(const f of funds){
+                const priceVar=`v_${f.code.startsWith('5')?'sh':'sz'}${f.code}`;
+                if(window[priceVar]){
+                    const parts=window[priceVar].split('~');
+                    let price=parseFloat(parts[3]);
+                    if(isNaN(price)||price<=0)price=parseFloat(parts[12]);
+                    if(!isNaN(price)&&price>0)priceData[f.code]=price;
+                }
+                const indexVar=`v_${f.indexCode}`;
+                if(window[indexVar]){
+                    const str=window[indexVar];
+                    const regex=/(?:~-?\d+\.\d+)~(-?\d+\.\d+)~/g;
+                    let match, validChange=null;
+                    while((match=regex.exec(str))!==null){
+                        const change=parseFloat(match[1]);
+                        if(!isNaN(change)&&Math.abs(change)<=20){validChange=change;break;}
                     }
+                    if(validChange!==null)indexChangeData[f.code]=validChange;
                 }
-                for (const f of funds) {
-                    const indexVar = `v_${f.indexCode}`;
-                    if (window[indexVar]) {
-                        const str = window[indexVar];
-                        const regex = /~(-?\d+\.\d+)~(-?\d+\.\d+)~/g;
-                        let match;
-                        let validChange = null;
-                        while ((match = regex.exec(str)) !== null) {
-                            const change = parseFloat(match[2]);
-                            if (!isNaN(change) && Math.abs(change) <= 20) {
-                                validChange = change;
-                                break;
-                            }
-                        }
-                        if (validChange !== null) indexChangeData[f.code] = validChange;
-                    }
-                }
-                for (const f of funds) {
-                    delete window[`v_${f.code.startsWith('5') ? 'sh' : 'sz'}${f.code}`];
-                    delete window[`v_${f.indexCode}`];
-                }
-                resolve();
-            };
-            script.onerror = () => {
-                clearTimeout(timeoutId);
-                reject(new Error('腾讯接口请求失败'));
-            };
-            document.head.appendChild(script);
-        });
-    }
-
-    function getDataArray() {
-        return funds.map(f => {
-            const navObj = STATIC_NAV[f.code];
-            const nav = navObj ? navObj.nav : null;
-            const price = priceData[f.code] !== undefined ? priceData[f.code] : null;
-            const indexChange = indexChangeData[f.code] !== undefined ? indexChangeData[f.code] : null;
-            let finalNav = null;
-            let premium = null;
-            if (nav !== null && indexChange !== null) {
-                finalNav = nav * (1 + indexChange / 100);
-                if (price !== null) {
-                    premium = (price / finalNav - 1) * 100;
-                }
+                delete window[priceVar]; delete window[indexVar];
             }
-            return {
-                code: f.code,
-                name: f.name,
-                price: price,
-                nav: nav,
-                indexChange: indexChange,
-                finalNav: finalNav,
-                premium: premium
-            };
-        });
-    }
-
-    function sortData(data, col, asc) {
-        return data.sort((a, b) => {
-            if (col === 'code' || col === 'name') {
-                let va = a[col], vb = b[col];
-                return asc ? va.localeCompare(vb) : vb.localeCompare(va);
-            } else if (col === 'price') {
-                let va = a.price !== null ? a.price : -Infinity;
-                let vb = b.price !== null ? b.price : -Infinity;
-                return asc ? va - vb : vb - va;
-            } else if (col === 'nav') {
-                let va = a.nav !== null ? a.nav : -Infinity;
-                let vb = b.nav !== null ? b.nav : -Infinity;
-                return asc ? va - vb : vb - va;
-            } else if (col === 'indexChange') {
-                let va = a.indexChange !== null ? a.indexChange : -Infinity;
-                let vb = b.indexChange !== null ? b.indexChange : -Infinity;
-                return asc ? va - vb : vb - va;
-            } else if (col === 'finalNav') {
-                let va = a.finalNav !== null ? a.finalNav : -Infinity;
-                let vb = b.finalNav !== null ? b.finalNav : -Infinity;
-                return asc ? va - vb : vb - va;
-            } else if (col === 'premium') {
-                let va = a.premium !== null ? a.premium : -Infinity;
-                let vb = b.premium !== null ? b.premium : -Infinity;
-                return asc ? va - vb : vb - va;
-            }
-            return 0;
-        });
-    }
-
-    function updateTable() {
-        const data = getDataArray();
-        const sorted = sortData(data, currentSort.col, currentSort.asc);
-        const tbody = document.querySelector('#dataTable tbody');
-        let html = '';
-        for (const item of sorted) {
-            const price = item.price !== null ? item.price.toFixed(3) : '—';
-            const nav = item.nav !== null ? item.nav.toFixed(4) : '—';
-            const indexChange = item.indexChange !== null ? item.indexChange : null;
-            const changeStr = (indexChange !== null) ? (indexChange > 0 ? '+' : '') + indexChange.toFixed(2) + '%' : '—';
-            const changeClass = (indexChange !== null && indexChange >= 0) ? 'positive' : 'negative';
-            const finalNav = item.finalNav !== null ? item.finalNav.toFixed(4) : '—';
-            const premium = item.premium !== null ? (item.premium > 0 ? '+' : '') + item.premium.toFixed(2) + '%' : '—';
-            const premiumClass = (item.premium !== null && item.premium >= 0) ? 'positive' : 'negative';
-            html += `<tr>
-                <td>${item.code}</td>
-                <td>${item.name}</td>
-                <td>${price}</td>
-                <td>${nav}</td>
-                <td class="${changeClass}">${changeStr}</td>
-                <td>${finalNav}</td>
-                <td class="${premiumClass}">${premium}</td>
-            </tr>`;
+            resolve();
+        };
+        script.onerror=()=>{clearTimeout(timeoutId);reject(new Error('接口失败'));};
+        document.head.appendChild(script);
+    });
+}
+function getDataArray(){
+    return funds.map(f=>{
+        const navObj=STATIC_NAV[f.code];
+        const nav=navObj?navObj.nav:null;
+        const price=priceData[f.code];
+        const idxChange=indexChangeData[f.code];
+        let finalNav=null, premium=null;
+        if(nav&&idxChange!==undefined){
+            finalNav=nav*(1+idxChange/100);
+            if(price!==undefined)premium=(price/finalNav-1)*100;
         }
-        tbody.innerHTML = html;
-        document.getElementById('updateTime').innerText = '更新于：' + new Date().toLocaleTimeString();
-        updateSortIcons();
+        return {code:f.code,name:f.name,price,nav,indexChange:idxChange,finalNav,premium};
+    });
+}
+function sortData(data,col,asc){
+    return data.sort((a,b)=>{
+        let va=a[col]??(col==='code'||col==='name'?'':-Infinity);
+        let vb=b[col]??(col==='code'||col==='name'?'':-Infinity);
+        if(col==='code'||col==='name')return asc?va.localeCompare(vb):vb.localeCompare(va);
+        return asc?va-vb:vb-va;
+    });
+}
+function updateTable(){
+    const data=getDataArray();
+    const sorted=sortData(data,currentSort.col,currentSort.asc);
+    let html='';
+    for(const item of sorted){
+        const price=item.price!==undefined?item.price.toFixed(3):'—';
+        const nav=item.nav?item.nav.toFixed(4):'—';
+        const change=item.indexChange!==undefined?item.indexChange:null;
+        const changeStr=change!==null?(change>0?'+':'')+change.toFixed(2)+'%':'—';
+        const changeClass=change!==null&&change>=0?'positive':'negative';
+        const finalNav=item.finalNav?item.finalNav.toFixed(4):'—';
+        const premium=item.premium!==null?(item.premium>0?'+':'')+item.premium.toFixed(2)+'%':'—';
+        const premiumClass=item.premium!==null&&item.premium>=0?'positive':'negative';
+        html+=`<tr><td>${item.code}</td><td>${item.name}</td><td>${price}</td><td>${nav}</td><td class="${changeClass}">${changeStr}</td><td>${finalNav}</td><td class="${premiumClass}">${premium}</td></tr>`;
     }
-
-    function updateSortIcons() {
-        const headers = document.querySelectorAll('#dataTable th');
-        headers.forEach(th => {
-            const col = th.getAttribute('data-col');
-            const iconSpan = th.querySelector('.sort-icon');
-            if (col === currentSort.col) {
-                iconSpan.textContent = currentSort.asc ? '▲' : '▼';
-            } else {
-                iconSpan.textContent = '';
-            }
-        });
-    }
-
-    let refreshInProgress = false;
-    async function refreshData() {
-        if (refreshInProgress) return;
-        refreshInProgress = true;
-        const btn = document.getElementById('refreshBtn');
-        const errorDiv = document.getElementById('errorMsg');
-        btn.disabled = true;
-        btn.textContent = '刷新中...';
-        errorDiv.innerText = '';
-        try {
-            await fetchPriceAndIndex();
+    document.querySelector('#dataTable tbody').innerHTML=html;
+    document.getElementById('updateTime').innerText='更新于：'+new Date().toLocaleTimeString();
+}
+function updateSortIcons(){}
+async function refreshData(){
+    const btn=document.getElementById('refreshBtn'),errorDiv=document.getElementById('errorMsg');
+    btn.disabled=true;btn.textContent='刷新中...';errorDiv.innerText='';
+    try{await fetchPriceAndIndex();updateTable();}
+    catch(err){errorDiv.innerText='刷新失败：'+err.message;}
+    finally{btn.disabled=false;btn.textContent='🔄 刷新股价/指数';}
+}
+function setupSorting(){
+    document.querySelectorAll('#dataTable th').forEach(th=>{
+        th.addEventListener('click',()=>{
+            const col=th.getAttribute('data-col');
+            if(col===currentSort.col)currentSort.asc=!currentSort.asc;
+            else{currentSort.col=col;currentSort.asc=true;}
             updateTable();
-        } catch (err) {
-            console.error(err);
-            errorDiv.innerText = '刷新失败：' + err.message + '，请稍后重试或检查网络。';
-        } finally {
-            btn.disabled = false;
-            btn.textContent = '🔄 刷新股价/指数';
-            refreshInProgress = false;
-        }
-    }
-
-    function setupSorting() {
-        const headers = document.querySelectorAll('#dataTable th');
-        headers.forEach(th => {
-            th.addEventListener('click', () => {
-                const col = th.getAttribute('data-col');
-                if (col === currentSort.col) {
-                    currentSort.asc = !currentSort.asc;
-                } else {
-                    currentSort.col = col;
-                    currentSort.asc = true;
-                }
-                updateTable();
-            });
         });
-    }
-
-    renderNavOnly();
-    setupSorting();
-    document.getElementById('refreshBtn').addEventListener('click', refreshData);
+    });
+}
+renderNavOnly();setupSorting();document.getElementById('refreshBtn').addEventListener('click',refreshData);
 </script>
 </body>
 </html>

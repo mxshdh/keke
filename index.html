@@ -1,232 +1,97 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>估值看板</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f5f7fb;
-            padding: 6px;
-            color: #1e293b;
-            font-size: 12px;
-        }
-        .container { max-width: 100%; margin: 0 auto; }
-        h1 { font-size: 14px; margin: 6px 0 8px; }
-        .toolbar { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
-        .navbar { display: flex; gap: 10px; margin-bottom: 12px; background: white; padding: 6px 12px; border-radius: 8px; }
-        .navbar a { text-decoration: none; color: #3b82f6; font-size: 12px; }
-        button {
-            background: #3b82f6; color: white; border: none;
-            padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;
-        }
-        button:active { background: #2563eb; }
-        table {
-            width: 100%; border-collapse: collapse; background: white;
-            border-radius: 8px; overflow: hidden; table-layout: fixed;
-        }
-        th {
-            background: #f8fafc; padding: 6px 2px; text-align: left;
-            font-weight: 600; font-size: 10px; color: #64748b;
-            border-bottom: 2px solid #e2e8f0; cursor: pointer; user-select: none;
-            white-space: nowrap;
-        }
-        th:hover { color: #3b82f6; }
-        th .arrow { font-size: 8px; margin-left: 2px; }
-        td {
-            padding: 5px 2px; border-bottom: 1px solid #f1f5f9;
-            font-size: 11px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis;
-        }
-        tr:hover { background: #f8fafc; }
-        th:nth-child(1), td:nth-child(1) { width: 52px; }
-        th:nth-child(2), td:nth-child(2) { width: auto; }
-        th:nth-child(3), td:nth-child(3) { width: 50px; text-align: right; }
-        th:nth-child(4), td:nth-child(4) { width: 52px; text-align: right; }
-        th:nth-child(5), td:nth-child(5) { width: 54px; text-align: right; }
-        .code { font-weight: 600; color: #3b82f6; }
-        .rate-badge {
-            display: inline-block; padding: 2px 6px; border-radius: 10px;
-            font-weight: 700; font-size: 10px; min-width: 50px; text-align: center;
-        }
-        .rate-badge.positive { color: #ef4444; background: #fef2f2; }
-        .rate-badge.negative { color: #10b981; background: #f0fdf4; }
-        .update-time { font-size: 9px; color: #94a3b8; text-align: center; margin-top: 8px; }
-        .kweb-impact, .hssi-impact { font-size: 9px; font-weight: 600; }
-        .kweb-impact { color: #f59e0b; }
-        .hssi-impact { color: #3b82f6; }
-    </style>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>估值看板</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,sans-serif;background:#f5f7fb;padding:6px;color:#1e293b;font-size:12px;}
+.container{max-width:100%;margin:0 auto;}
+.navbar{display:flex;gap:10px;margin-bottom:12px;background:#fff;padding:6px 12px;border-radius:8px;}
+.navbar a{text-decoration:none;color:#3b82f6;font-size:12px;}
+h1{font-size:14px;margin:6px 0 8px;}
+.toolbar{display:flex;gap:6px;margin-bottom:8px;}
+button{background:#3b82f6;color:#fff;border:none;padding:5px 10px;border-radius:4px;font-size:11px;cursor:pointer;}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;table-layout:fixed;}
+th{background:#f8fafc;padding:6px 2px;text-align:left;font-size:10px;border-bottom:2px solid #e2e8f0;cursor:pointer;}
+td{padding:5px 2px;border-bottom:1px solid #f1f5f9;font-size:11px;}
+.code{font-weight:600;color:#3b82f6;}
+.rate-badge{display:inline-block;padding:2px 6px;border-radius:10px;font-weight:700;font-size:10px;min-width:50px;text-align:center;}
+.rate-badge.positive{color:#ef4444;background:#fef2f2;}
+.rate-badge.negative{color:#10b981;background:#f0fdf4;}
+.update-time{font-size:9px;color:#94a3b8;text-align:center;margin-top:8px;}
+.kweb-impact,.hssi-impact{font-size:9px;font-weight:600;}
+</style>
 </head>
 <body>
 <div class="container">
-    <div class="navbar">
-        <a href="./">QDII估值</a>
-        <a href="./domestic.html">国内LOF</a>
-    </div>
-    <h1>📊 估值看板</h1>
-    <div class="toolbar">
-        <button onclick="refreshPrices()">🔄 刷新</button>
-    </div>
-    <table>
-        <thead>
-            <tr>
-                <th onclick="sortBy('code')">代码 <span class="arrow" id="arrow_code"></span></th>
-                <th onclick="sortBy('name')">名称 <span class="arrow" id="arrow_name"></span></th>
-                <th onclick="sortBy('price')">股价 <span class="arrow" id="arrow_price"></span></th>
-                <th onclick="sortBy('est_nav')">估值 <span class="arrow" id="arrow_est_nav"></span></th>
-                <th onclick="sortBy('rate')">溢价 <span class="arrow" id="arrow_rate">▼</span></th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-            <tr><td colspan="5" style="text-align:center;color:#94a3b8;">加载中...</td></tr>
-        </tbody>
-    </table>
-    <div class="update-time" id="updateTime"></div>
+<div class="navbar"><a href="./">QDII估值</a><a href="./domestic.html">国内LOF</a></div>
+<h1>📊 估值看板</h1>
+<div class="toolbar"><button onclick="refreshPrices()">🔄 刷新</button></div>
+<table><thead><tr><th onclick="sortBy('code')">代码</th><th onclick="sortBy('name')">名称</th><th onclick="sortBy('price')">股价</th><th onclick="sortBy('est_nav')">估值</th><th onclick="sortBy('rate')">溢价</th></tr></thead><tbody id="tableBody"><tr><td colspan="5">加载中...</td></tr></tbody></table>
+<div class="update-time" id="updateTime"></div>
 </div>
-
 <script>
-    const VALUATION_DATA = {"funds": {"161130": {"name": "纳斯达克", "est_nav": 4.384450875504707, "nav": 4.5955, "price": 4.679}, "161127": {"name": "标普生物", "est_nav": 1.7312528020201456, "nav": 1.793, "price": 1.768}, "161128": {"name": "标普信息", "est_nav": 6.8988768190548795, "nav": 6.9033, "price": 7.118}, "161126": {"name": "标普医疗", "est_nav": 1.8598075935076168, "nav": 1.861, "price": 1.853}, "161125": {"name": "标普500", "est_nav": 3.054710816622905, "nav": 3.1353, "price": 3.17}, "161124": {"name": "香港小盘", "est_nav": 0.9864, "nav": 0.9864, "price": 0.983}, "162411": {"name": "华宝油气", "est_nav": 0.8781890853915517, "nav": 0.904, "price": 0.891}, "162415": {"name": "美国消费", "est_nav": 2.836802975241192, "nav": 2.895, "price": 2.858}, "162719": {"name": "石油LOF", "est_nav": 2.6731461913912877, "nav": 2.7426, "price": 2.706}, "160416": {"name": "石油基金", "est_nav": 2.0761909295924226, "nav": 2.1194, "price": 2.09}, "164824": {"name": "印度基金", "est_nav": 1.269456092244912, "nav": 1.2815, "price": 1.267}, "501225": {"name": "全球芯片", "est_nav": 3.1256408413871295, "nav": 3.3679, "price": 4.25}, "160140": {"name": "美国精选", "est_nav": 1.4104987190893281, "nav": 1.4019, "price": 1.39}, "160644": {"name": "港美互联", "est_nav": 1.9243851145653579, "nav": 2.0789, "price": 2.132}, "160719": {"name": "嘉实黄金", "est_nav": 1.9681899727102736, "nav": 2.009, "price": 1.98}, "160723": {"name": "嘉实原油", "est_nav": 2.088850975591105, "nav": 2.106, "price": 2.179}, "161116": {"name": "黄金主题", "est_nav": 1.618306858750608, "nav": 1.6683, "price": 1.648}, "161129": {"name": "原油易达", "est_nav": 1.7441435422497498, "nav": 1.7646, "price": 1.804}, "163208": {"name": "全球油气", "est_nav": 1.2969408455059184, "nav": 1.328, "price": 1.31}, "164701": {"name": "黄金LOF", "est_nav": 1.6921796073503759, "nav": 1.762, "price": 1.736}, "165513": {"name": "中信保诚", "est_nav": 1.0266304733383071, "nav": 1.0626, "price": 1.048}, "501018": {"name": "南方原油", "est_nav": 1.83065088489715, "nav": 1.8499, "price": 1.949}, "501312": {"name": "海外科技", "est_nav": 2.234398008501307, "nav": 2.4162, "price": 2.373}, "164906": {"name": "中概互联", "est_nav": 0.972024967176961, "nav": 0.9757, "price": 0.964}}};
-    const FUND_CODES = Object.keys(VALUATION_DATA);
-    let sortCol = "rate", sortAsc = false;
-    let currentPrices = {};
-
-    function buildList() {
-        let list = [];
-        for (const code of FUND_CODES) {
-            const data = VALUATION_DATA[code] || {};
-            let price;
-            if (currentPrices[code] && currentPrices[code] > 0.001 && currentPrices[code] < 10000) {
-                price = currentPrices[code];
-            } else if (data.price && data.price > 0) {
-                price = data.price;
-            } else {
-                price = null;
-            }
-            const est = data.est_nav || null;
-            const rate = (price && est && est > 0) ? ((price / est - 1) * 100) : null;
-            list.push({
-                code, name: data.name || code,
-                price, est_nav: est, rate,
-                _kweb_impact: currentPrices['_kweb_impact'],
-                _hssi_change: currentPrices['_hssi_change']
-            });
-        }
-        return list;
+const VALUATION_DATA = {"161130": {"name": "纳斯达克", "est_nav": 4.384450875504707, "nav": 4.5955, "price": 4.679}, "161127": {"name": "标普生物", "est_nav": 1.7312528020201456, "nav": 1.793, "price": 1.768}, "161128": {"name": "标普信息", "est_nav": 6.8988768190548795, "nav": 6.9033, "price": 7.118}, "161126": {"name": "标普医疗", "est_nav": 1.8598075935076168, "nav": 1.861, "price": 1.853}, "161125": {"name": "标普500", "est_nav": 3.054710816622905, "nav": 3.1353, "price": 3.17}, "161124": {"name": "香港小盘", "est_nav": 0.9864, "nav": 0.9864, "price": 0.983}, "162411": {"name": "华宝油气", "est_nav": 0.8781890853915517, "nav": 0.904, "price": 0.891}, "162415": {"name": "美国消费", "est_nav": 2.836802975241192, "nav": 2.895, "price": 2.858}, "162719": {"name": "石油LOF", "est_nav": 2.6731461913912877, "nav": 2.7426, "price": 2.706}, "160416": {"name": "石油基金", "est_nav": 2.0761909295924226, "nav": 2.1194, "price": 2.09}, "164824": {"name": "印度基金", "est_nav": 1.269456092244912, "nav": 1.2815, "price": 1.267}, "501225": {"name": "全球芯片", "est_nav": 3.1256408413871295, "nav": 3.3679, "price": 4.25}, "160140": {"name": "美国精选", "est_nav": 1.4104987190893281, "nav": 1.4019, "price": 1.39}, "160644": {"name": "港美互联", "est_nav": 1.9243851145653579, "nav": 2.0789, "price": 2.132}, "160719": {"name": "嘉实黄金", "est_nav": 1.9681899727102736, "nav": 2.009, "price": 1.98}, "160723": {"name": "嘉实原油", "est_nav": 2.088850975591105, "nav": 2.106, "price": 2.179}, "161116": {"name": "黄金主题", "est_nav": 1.618306858750608, "nav": 1.6683, "price": 1.648}, "161129": {"name": "原油易达", "est_nav": 1.7441435422497498, "nav": 1.7646, "price": 1.804}, "163208": {"name": "全球油气", "est_nav": 1.2969408455059184, "nav": 1.328, "price": 1.31}, "164701": {"name": "黄金LOF", "est_nav": 1.6921796073503759, "nav": 1.762, "price": 1.736}, "165513": {"name": "中信保诚", "est_nav": 1.0266304733383071, "nav": 1.0626, "price": 1.048}, "501018": {"name": "南方原油", "est_nav": 1.83065088489715, "nav": 1.8499, "price": 1.949}, "501312": {"name": "海外科技", "est_nav": 2.234398008501307, "nav": 2.4162, "price": 2.373}, "164906": {"name": "中概互联", "est_nav": 0.972024967176961, "nav": 0.9757, "price": 0.964}};
+const FUND_CODES = Object.keys(VALUATION_DATA);
+let sortCol = "rate", sortAsc = false;
+let currentPrices = {};
+function buildList(){
+    let list=[];
+    for(const code of FUND_CODES){
+        const data=VALUATION_DATA[code]||{};
+        let price=currentPrices[code]||data.price||null;
+        const est=data.est_nav||null;
+        const rate=(price&&est)?((price/est-1)*100):null;
+        list.push({code,name:data.name||code,price,est_nav:est,rate});
     }
-
-    function sortBy(col) {
-        if (sortCol === col) sortAsc = !sortAsc;
-        else { sortCol = col; sortAsc = (col === "rate"); }
-        document.querySelectorAll(".arrow").forEach(a => a.innerText = "");
-        const arrow = document.getElementById("arrow_" + col);
-        if (arrow) arrow.innerText = sortAsc ? "▲" : "▼";
-        renderTable();
-    }
-
-    function renderTable() {
-        const list = buildList();
-        list.sort((a, b) => {
-            let va = a[sortCol] !== null ? a[sortCol] : (sortAsc ? 9999 : -9999);
-            let vb = b[sortCol] !== null ? b[sortCol] : (sortAsc ? 9999 : -9999);
-            if (sortCol === "code" || sortCol === "name") {
-                return sortAsc ? vb.localeCompare(va) : va.localeCompare(vb);
-            }
-            return sortAsc ? va - vb : vb - va;
-        });
-
-        let html = "";
-        for (const f of list) {
-            const priceStr = f.price ? f.price.toFixed(3) : "—";
-            const estStr = f.est_nav ? f.est_nav.toFixed(3) : "—";
-            const rateStr = f.rate !== null ? (f.rate >= 0 ? "+" : "") + f.rate.toFixed(2) + "%" : "—";
-            const rateClass = f.rate !== null ? (f.rate >= 0 ? "positive" : "negative") : "";
-            let extra = "";
-            if (f.code === "164906" && f._kweb_impact !== undefined) {
-                extra = `<br><span class="kweb-impact">实时港股持仓：${f._kweb_impact.toFixed(2)}%</span>`;
-            }
-            if (f.code === "161124" && f._hssi_change !== undefined) {
-                extra = `<br><span class="hssi-impact">指数涨跌：${f._hssi_change.toFixed(2)}%</span>`;
-            }
-            html += `<tr>
-                <td class="code">${f.code}</td>
-                <td>${f.name}${extra}</td>
-                <td>${priceStr}</td>
-                <td>${estStr}</td>
-                <td><span class="rate-badge ${rateClass}">${rateStr}</span></td>
-            </tr>`;
-        }
-        document.getElementById("tableBody").innerHTML = html || '<tr><td colspan="5">无数据</td></tr>';
-    }
-
-    function refreshPrices() {
-        const codes = FUND_CODES.map(c => (c.startsWith('5')||c.startsWith('6')||c.startsWith('9')?'sh':'sz') + c).join(',');
-        const script = document.createElement('script');
-        script.src = `https://web.sqt.gtimg.cn/q=${codes}`;
-        script.onload = function() {
-            for (const code of FUND_CODES) {
-                const prefix = (code.startsWith('5')||code.startsWith('6')||code.startsWith('9')?'sh':'sz');
-                const raw = window[`v_${prefix}${code}`];
-                if (raw && typeof raw === 'string') {
-                    const parts = raw.split('~');
-                    let price = parseFloat(parts[3]);
-                    if (isNaN(price) || price <= 0) price = parseFloat(parts[12]);
-                    if (!isNaN(price) && price > 0.001 && price < 10000) currentPrices[code] = price;
-                }
-            }
-            // 中概互联港股持仓
-            const hkOnly = {
-                '0700HK': 8.6,
-                '9988HK': 8.2,
-                '3690HK': 6.3,
-                '9999HK': 5.6,
-                '9618HK': 4.5,
-                '9888HK': 4.7,
-                '2423HK': 4.3,
-                '6618HK': 3.1
-            };
-            const symbols = Object.keys(hkOnly).map(s => 'hk' + s.slice(0, -2).padStart(5, '0')).join(',');
-            const kwScript = document.createElement('script');
-            kwScript.src = `https://web.sqt.gtimg.cn/q=${symbols}`;
-            kwScript.onload = function() {
-                let totalWeight = 0;
-                let weightedChange = 0;
-                for (const [code, w] of Object.entries(hkOnly)) {
-                    const hkCode = code.slice(0, -2).padStart(5, '0');
-                    const raw = window[`v_hk${hkCode}`];
-                    if (raw) {
-                        const parts = raw.split('~');
-                        const change = parseFloat(parts[5]);
-                        if (!isNaN(change)) {
-                            weightedChange += change * w;
-                            totalWeight += w;
-                        }
-                    }
-                }
-                const impact = totalWeight > 0 ? weightedChange / totalWeight : 0;
-                currentPrices['_kweb_impact'] = impact;
-                const hsScript = document.createElement('script');
-                hsScript.src = 'https://web.sqt.gtimg.cn/q=hkHSSI';
-                hsScript.onload = function() {
-                    const raw = window['v_hkHSSI'];
-                    if (raw) {
-                        const parts = raw.split('~');
-                        const change = parseFloat(parts[5]);
-                        if (!isNaN(change)) currentPrices['_hssi_change'] = change;
-                    }
-                    renderTable();
-                    document.getElementById("updateTime").innerText = "刷新于：" + new Date().toLocaleTimeString();
-                };
-                document.head.appendChild(hsScript);
-            };
-            document.head.appendChild(kwScript);
-            document.head.removeChild(script);
-        };
-        script.onerror = function() { alert('刷新失败'); };
-        document.head.appendChild(script);
-    }
-
+    return list;
+}
+function sortBy(col){
+    if(sortCol===col)sortAsc=!sortAsc;
+    else{sortCol=col;sortAsc=(col==="rate");}
     renderTable();
+}
+function renderTable(){
+    const list=buildList();
+    list.sort((a,b)=>{
+        let va=a[sortCol]!==null?a[sortCol]:(sortAsc?9999:-9999);
+        let vb=b[sortCol]!==null?b[sortCol]:(sortAsc?9999:-9999);
+        if(sortCol==="code"||sortCol==="name") return sortAsc?vb.localeCompare(va):va.localeCompare(vb);
+        return sortAsc?va-vb:vb-va;
+    });
+    let html="";
+    for(const f of list){
+        const priceStr=f.price?f.price.toFixed(3):"—";
+        const estStr=f.est_nav?f.est_nav.toFixed(3):"—";
+        const rateStr=f.rate!==null?(f.rate>=0?"+":"")+f.rate.toFixed(2)+"%":"—";
+        const rateClass=f.rate!==null?(f.rate>=0?"positive":"negative"):"";
+        html+=`<tr><td class="code">${f.code}</td><td>${f.name}</td><td>${priceStr}</td><td>${estStr}</td><td><span class="rate-badge ${rateClass}">${rateStr}</span></td></tr>`;
+    }
+    document.getElementById("tableBody").innerHTML=html||'<tr><td colspan="5">无数据</td></tr>';
+}
+function refreshPrices(){
+    const codes=FUND_CODES.map(c=>(c.startsWith('5')||c.startsWith('6')||c.startsWith('9')?'sh':'sz')+c).join(',');
+    const script=document.createElement('script');
+    script.src=`https://web.sqt.gtimg.cn/q=${codes}`;
+    script.onload=function(){
+        for(const code of FUND_CODES){
+            const prefix=(code.startsWith('5')||code.startsWith('6')||code.startsWith('9')?'sh':'sz');
+            const raw=window[`v_${prefix}${code}`];
+            if(raw&&typeof raw==='string'){
+                const parts=raw.split('~');
+                let price=parseFloat(parts[3]);
+                if(isNaN(price)||price<=0)price=parseFloat(parts[12]);
+                if(!isNaN(price)&&price>0)currentPrices[code]=price;
+            }
+        }
+        renderTable();
+        document.getElementById("updateTime").innerText="刷新于："+new Date().toLocaleTimeString();
+        document.head.removeChild(script);
+    };
+    script.onerror=function(){alert('刷新失败');};
+    document.head.appendChild(script);
+}
+renderTable();
 </script>
 </body>
 </html>
