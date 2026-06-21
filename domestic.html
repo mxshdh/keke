@@ -57,7 +57,6 @@ function fetchPriceAndIndex(){
         script.src=`https://web.sqt.gtimg.cn/q=${allSymbols}`;
         script.onload=()=>{
             clearTimeout(timeoutId);
-            // 第一步：收集所有数据，不删除变量
             for(const f of funds){
                 const priceVar = `v_${f.code.startsWith('5')?'sh':'sz'}${f.code}`;
                 if(window[priceVar]){
@@ -78,7 +77,6 @@ function fetchPriceAndIndex(){
                     if(validChange!==null)indexChangeData[f.code]=validChange;
                 }
             }
-            // 第二步：统一删除全局变量
             for(const f of funds){
                 delete window[`v_${f.code.startsWith('5')?'sh':'sz'}${f.code}`];
                 delete window[`v_${f.indexCode}`];
